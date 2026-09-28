@@ -4,7 +4,7 @@ from typing import Generator
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from src.utils.logger import get_logger
 
