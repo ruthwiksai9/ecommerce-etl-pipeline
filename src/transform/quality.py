@@ -23,12 +23,18 @@ class QualityResult:
             self.passed = False
 
 
-def check_nulls(df: pd.DataFrame, critical_cols: List[str], threshold_pct: float = 5.0) -> dict:
+def check_nulls(
+    df: pd.DataFrame, critical_cols: List[str], threshold_pct: float = 5.0
+) -> dict:
     """Fail if critical columns exceed null threshold."""
     results = {}
     for col in critical_cols:
         if col not in df.columns:
-            results[col] = {"null_pct": None, "passed": False, "reason": "column missing"}
+            results[col] = {
+                "null_pct": None,
+                "passed": False,
+                "reason": "column missing",
+            }
             continue
         null_pct = (df[col].isna().sum() / len(df)) * 100
         results[col] = {
@@ -107,18 +113,24 @@ def run_quality_checks(dataframes: dict) -> List[QualityResult]:
 
         if "price" in df.columns:
             price_check = check_value_ranges(df, "price", min_val=0)
-            result.add_check("price_non_negative", price_check["passed"], str(price_check))
+            result.add_check(
+                "price_non_negative", price_check["passed"], str(price_check)
+            )
 
         if "orders" in dataframes:
             ref_check = check_referential_integrity(
                 df, dataframes["orders"], "order_id", "order_id"
             )
-            result.add_check("order_items_fk_orders", ref_check["passed"], str(ref_check))
+            result.add_check(
+                "order_items_fk_orders", ref_check["passed"], str(ref_check)
+            )
 
         results.append(result)
 
     for r in results:
         status = "PASSED" if r.passed else "FAILED"
-        log.info(f"Quality check [{r.dataset}]: {status} ({r.failed_checks} failures, {r.total_rows:,} rows)")
+        log.info(
+            f"Quality check [{r.dataset}]: {status} ({r.failed_checks} failures, {r.total_rows:,} rows)"
+        )
 
     return results

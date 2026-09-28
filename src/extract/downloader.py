@@ -61,7 +61,7 @@ def download_olist_data(output_dir: str = "data/raw", max_retries: int = 3) -> d
             except requests.RequestException as e:
                 log.warning(f"Attempt {attempt + 1} failed for {name}: {e}")
                 if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                 else:
                     log.error(f"Failed to download {name} after {max_retries} attempts")
 

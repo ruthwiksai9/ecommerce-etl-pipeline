@@ -35,7 +35,9 @@ def truncate_and_load(
             method="multi",
         )
         rows_loaded += len(batch)
-        log.debug(f"Loaded batch {i // batch_size + 1}: {rows_loaded:,}/{total_rows:,} rows -> {full_table}")
+        log.debug(
+            f"Loaded batch {i // batch_size + 1}: {rows_loaded:,}/{total_rows:,} rows -> {full_table}"
+        )
 
     log.info(f"Load complete: {rows_loaded:,} rows -> {full_table}")
     return rows_loaded
@@ -54,7 +56,9 @@ def upsert(
     cols = list(df.columns)
     col_names = ", ".join(cols)
     placeholders = ", ".join([f":{c}" for c in cols])
-    update_set = ", ".join([f"{c} = EXCLUDED.{c}" for c in cols if c not in conflict_cols])
+    update_set = ", ".join(
+        [f"{c} = EXCLUDED.{c}" for c in cols if c not in conflict_cols]
+    )
     conflict_target = ", ".join(conflict_cols)
 
     sql = text(f"""
@@ -102,7 +106,13 @@ def load_all(dataframes: dict, batch_size: int = 10000) -> dict:
                 load_stats[name] = {"rows_loaded": rows, "status": "success"}
             except Exception as e:
                 log.error(f"Load failed for {name}: {e}")
-                load_stats[name] = {"rows_loaded": 0, "status": "failed", "error": str(e)}
+                load_stats[name] = {
+                    "rows_loaded": 0,
+                    "status": "failed",
+                    "error": str(e),
+                }
 
-    log.info(f"Load phase complete: {sum(v['rows_loaded'] for v in load_stats.values()):,} total rows")
+    log.info(
+        f"Load phase complete: {sum(v['rows_loaded'] for v in load_stats.values()):,} total rows"
+    )
     return load_stats
