@@ -1,0 +1,32 @@
+database:
+  host: ${POSTGRES_HOST:-localhost}
+  port: ${POSTGRES_PORT:-5432}
+  name: ${POSTGRES_DB:-ecommerce_dw}
+  user: ${POSTGRES_USER:-etl_user}
+  password: ${POSTGRES_PASSWORD:-etl_password}
+  pool_size: 5
+  max_overflow: 10
+
+pipeline:
+  batch_size: 10000
+  max_retries: 3
+  retry_delay_seconds: 5
+  log_level: INFO
+
+data_sources:
+  olist:
+    base_url: "https://raw.githubusercontent.com/olist/work-at-olist-data/master/datasets"
+    datasets:
+      - orders
+      - order_items
+      - customers
+      - products
+      - sellers
+      - order_payments
+      - order_reviews
+      - geolocation
+
+quality_checks:
+  null_threshold_pct: 5.0
+  duplicate_check: true
+  referential_integrity: true
