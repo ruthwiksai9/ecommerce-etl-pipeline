@@ -1,5 +1,7 @@
 # Ecommerce ETL Pipeline
 
+[![CI](https://github.com/ruthwiksai9/ecommerce-etl-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/ruthwiksai9/ecommerce-etl-pipeline/actions/workflows/ci.yml)
+
 End-to-end Python ETL pipeline that ingests Brazilian e-commerce data (Olist dataset), applies transformations and data quality checks, and loads into a PostgreSQL data warehouse with a star schema.
 
 ## Architecture
