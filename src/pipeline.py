@@ -4,6 +4,7 @@ from typing import Optional
 
 from src.extract.downloader import extract_all
 from src.load.loader import load_all
+from src.metrics.aggregator import run_all_metrics
 from src.transform.cleaner import transform_all
 from src.transform.quality import run_quality_checks
 from src.utils.db import test_connection
@@ -20,6 +21,7 @@ class PipelineResult:
     transform_stats: dict = field(default_factory=dict)
     load_stats: dict = field(default_factory=dict)
     quality_passed: bool = True
+    metrics_stats: list = field(default_factory=list)
     error: Optional[str] = None
 
 
@@ -43,7 +45,7 @@ def run_pipeline(
 
     try:
         # Extract
-        log.info("[1/4] EXTRACT")
+        log.info("[1/5] EXTRACT")
         raw_dataframes = extract_all(data_dir)
         extract_stats = {name: len(df) for name, df in raw_dataframes.items()}
 
@@ -55,11 +57,11 @@ def run_pipeline(
             )
 
         # Transform
-        log.info("[2/4] TRANSFORM")
+        log.info("[2/5] TRANSFORM")
         cleaned_dataframes, transform_stats = transform_all(raw_dataframes)
 
         # Quality checks
-        log.info("[3/4] QUALITY CHECKS")
+        log.info("[3/5] QUALITY CHECKS")
         quality_passed = True
         if not skip_quality_checks:
             quality_results = run_quality_checks(cleaned_dataframes)
@@ -69,8 +71,12 @@ def run_pipeline(
                 log.warning(f"Quality checks failed for: {failed}")
 
         # Load
-        log.info("[4/4] LOAD")
+        log.info("[4/5] LOAD")
         load_stats = load_all(cleaned_dataframes, batch_size=batch_size)
+
+        # Metrics aggregation
+        log.info("[5/5] METRICS")
+        metrics_stats = run_all_metrics()
 
         duration = time.time() - start_time
         success = all(v["status"] == "success" for v in load_stats.values())
@@ -87,6 +93,7 @@ def run_pipeline(
             transform_stats=transform_stats,
             load_stats=load_stats,
             quality_passed=quality_passed,
+            metrics_stats=metrics_stats,
         )
 
     except Exception as e:
