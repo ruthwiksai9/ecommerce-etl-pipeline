@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: etl_user
+          POSTGRES_PASSWORD: etl_password
+          POSTGRES_DB: ecommerce_dw
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create schema
+        env:
+          PGPASSWORD: etl_password
+        run: |
+          psql -h localhost -U etl_user -d ecommerce_dw -f sql/schema/01_init.sql
+          psql -h localhost -U etl_user -d ecommerce_dw -f sql/schema/02_staging.sql
+          psql -h localhost -U etl_user -d ecommerce_dw -f sql/schema/03_warehouse.sql
+          psql -h localhost -U etl_user -d ecommerce_dw -f sql/schema/04_metrics.sql
+
+      - name: Run tests with coverage
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: ecommerce_dw
+          POSTGRES_USER: etl_user
+          POSTGRES_PASSWORD: etl_password
+        run: pytest tests/ -v --cov=src --cov-report=term-missing --cov-fail-under=70
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install linters
+        run: pip install ruff
+
+      - name: Ruff lint
+        run: ruff check src/ tests/ --output-format=github
+
+      - name: Ruff format check
+        run: ruff format src/ tests/ --check
